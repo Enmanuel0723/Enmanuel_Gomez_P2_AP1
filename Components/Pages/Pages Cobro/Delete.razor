@@ -1,0 +1,105 @@
+﻿@page "/Modelos/Delete/{ModeloID:int}"
+
+@inject ModelosService modelosService
+@inject ArticulosService articulosService
+@inject NavigationManager navigation
+
+<PageTitle>Delete</PageTitle>
+<div class="container mb-4">
+	<div class="card">
+		<div class="row" style="background-color:white; padding:10px; margin:10px;">
+			<div class="col">
+				<div class="text-left">
+					<h2 class="text-black">Nuevo Modelo</h2>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="container">
+	<div class="card">
+		<div class="card-body">
+			<EditForm Model="Modelo" OnValidSubmit="Eliminar">
+				<div class="row mb-3">
+					<div class="col">
+						<label><strong>ID</strong></label>
+						<InputNumber class="form-control" @bind-Value="Modelo.ModeloId" readonly disabled placeholder="Campo"></InputNumber>
+					</div>
+					<div class="col">
+						<label><strong>Campo</strong></label>
+						<InputText class="form-control" @bind-Value="Modelo.EsteCampoPuedeVariar" readonly disabled placeholder="Campo"></InputText>
+					</div>
+					<div class="col">
+						<label><strong>Campo</strong></label>
+						<InputText class="form-control" readonly disabled @bind-Value="Modelo.EsteCampoPuedeVariar"></InputText>
+					</div>
+				</div>
+
+				<div class="container mb-3">
+					<div class="border border-success p-3 mt-3">
+						<div>
+							<span>Detalles de articulos</span>
+						</div>
+
+						<table class="table table-sm table-hover table-bordered">
+							<thead>
+								<tr>
+									<th>ID</th>
+									<th>Articulo</th>
+									<th>Cantidad</th>
+									<th>Precio</th>
+									<th>Total</th>
+								</tr>
+							</thead>
+							<tbody>
+								@foreach (var detalle in Modelo.Detalle)
+								{
+									var articulo = ListaArticulos.SingleOrDefault(a => a.ArticuloId == detalle.ArticuloId);
+									var subtotal = articulo?.Precio * detalle.Cantidad; @*<----CALCULO EN LA UI*@
+									<tr>
+										<td>@articulo?.ArticuloId</td>
+										<td>@articulo?.Nombre</td>
+										<td>@detalle.Cantidad</td>
+										<td>@articulo?.Precio.ToString("N2")</td>
+										<td>@subtotal</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				</div>
+
+				<div class="text-center">
+					<button class="btn btn-danger bi bi-trash3">   Eliminar</button>
+					<a href="/Modelos/Index" class="btn btn-sm btn-secondary bi bi-arrow-left-circle">   Volver</a>
+				</div>
+			</EditForm>
+		</div>
+	</div>
+</div>
+
+@code {
+	[Parameter]
+	public int ModeloID { get; set; }
+	[Inject]
+	protected ToastService ToastService { get; set; }
+	public Modelos Modelo { get; set; } = new();
+	public ModelosDetalle ModeloDetalle { get; set; } = new();
+	public List<Articulos> ListaArticulos { get; set; } = new();
+	public double Total { get; set; } = 0;
+	public bool DetalleRemovido { get; set; } = false;
+
+	protected override async Task OnInitializedAsync()
+	{
+		Modelo = await modelosService.Buscar(ModeloID);
+		ListaArticulos = await articulosService.Listar(x => true);
+	}
+
+	public async Task Eliminar()
+	{
+		await modelosService.Eliminar(ModeloID);
+		ToastService.Notify(new(ToastType.Success, "Exito", $"Modelo se ha borrado correctamente"));
+		navigation.NavigateTo("/Modelos/Index");
+	}
+}
