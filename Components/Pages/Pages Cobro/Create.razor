@@ -1,165 +1,174 @@
-﻿@page "/Modelos/Create"
+﻿@page "/Encuestas/Create"
 
-@inject ModelosService modelosService
-@inject ArticulosService articulosService
+@inject EncuestasService encuestasService
+@inject CiudadesService ciudadesService
 @inject NavigationManager navigation
+
+@rendermode InteractiveServer
 
 <PageTitle>Create</PageTitle>
 <div class="container mb-4">
-	<div class="card">
-		<div class="row" style="background-color:white; padding:10px; margin:10px;">
-			<div class="col">
-				<div class="text-left">
-					<h2 class="text-black">Nuevo Modelo</h2>
-				</div>
-			</div>
-		</div>
-	</div>
+    <div class="card">
+        <div class="row" style="background-color:white; padding:10px; margin:10px;">
+            <div class="col">
+                <div class="text-left">
+                    <h2 class="text-black">Nueva Encuesta</h2>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="container">
-	<div class="card">
-		<div class="card-body">
-			<EditForm Model="Modelo" OnValidSubmit="Guardar">
-				<div class="row mb-3">
-					<div class="col">
-						<label><strong>ID</strong></label>
-						<InputNumber class="form-control" @bind-Value="Modelo.ModeloId" readonly disabled placeholder="Campo"></InputNumber>
-					</div>
-					<div class="col">
-						<label><strong>Campo</strong></label>
-						<InputText class="form-control" @bind-Value="Modelo.EsteCampoPuedeVariar" placeholder="Campo"></InputText>
-					</div>
-					<div class="col">
-						<label><strong>Campo</strong></label>
-						<InputText class="form-control" readonly disabled @bind-Value="Modelo.EsteCampoPuedeVariar"></InputText>
-					</div>
-				</div>
+    <div class="card">
+        <div class="card-body">
+            <EditForm Model="Encuesta" OnValidSubmit="Guardar" FormName="EncuestaForm">
+                <DataAnnotationsValidator />
+                <div class="mb-3">
+                    <label><strong>ID</strong></label>
+                    <InputNumber class="form-control" @bind-Value="Encuesta.EncuestaId" readonly disabled placeholder="Encuesta"></InputNumber>
+                </div>
 
-				<div class="container mb-3">
-					<div class="border border-success p-3 mt-3">
-						<div>
-							<span>Detalles de articulos</span>
-						</div>
+                <div class="mb-3">
+                    <label><strong>Fecha</strong></label>
+                    <InputDate required class="form-control" @bind-Value="Encuesta.Fecha"></InputDate>
+                </div>
 
-						<div class="mb-4">
-							<SelectArticulos ArticuloId="ModeloDetalle.ArticuloId"
-							Cantidad="ModeloDetalle.Cantidad"
-							Precio="ModeloDetalle.Precio"
-							ArticuloSeleccionado="Agregar"
-							ListaArticulos="@ListaArticulos"
-							Detalle="ModeloDetalle" />
-						</div>
+                <div class="mb-3">
+                    <label><strong>Asignatura</strong></label>
+                    <InputText required class="form-control" @bind-Value="Encuesta.Asignatura"></InputText>
+                </div>
 
-						<table class="table table-sm table-hover table-bordered">
-							<thead>
-								<tr>
-									<th>ID</th>
-									<th>Articulo</th>
-									<th>Cantidad</th>
-									<th>Precio</th>
-									<th>Total</th>
-									<th>Remover</th>
-								</tr>
-							</thead>
-							<tbody>
-								@foreach (var detalle in Modelo.Detalle)
-								{
-									var articulo = ListaArticulos.SingleOrDefault(a => a.ArticuloId == detalle.ArticuloId);
-									var subtotal = articulo?.Precio * detalle.Cantidad; @*<----CALCULO EN LA UI*@
-									<tr>
-										<td>@articulo?.ArticuloId</td>
-										<td>@articulo?.Nombre</td>
-										<td>@detalle.Cantidad</td>
-										<td>@articulo?.Precio.ToString("N2")</td>
-										<td>@subtotal</td>
-										<td>
-											<button type="button" class="btn btn-sm btn-outline-danger bi bi-trash3" @onclick="(() => RemoverDetalle(detalle))"></button>
-										</td>
-									</tr>
-								}
-							</tbody>
-						</table>
-					</div>
-				</div>
+                <div class="container mb-3">
+                    <div class="border border-success p-3 mt-3">
+                        <div>
+                            <span>Detalle</span>
+                        </div>
 
-				<div class="text-center">
-					<button class="btn btn-success bi bi-floppy">   Guardar</button>
-					<a href="/Modelos/Index" class="btn btn-secondary bi bi-arrow-left-circle">   Volver</a>
-				</div>
-			</EditForm>
-		</div>
-	</div>
+                        <div class="mb-4">
+                            <div class="input-group">
+                                <InputSelect required class="form-select" @bind-Value="EncuestaDetalle.CiudadId">
+                                    <option value="0" disabled selected>--- Seleccione una ciudad ---</option>
+                                    @foreach (var ciudad in ListaCiudades)
+                                    {
+                                        <option value="@ciudad.CiudadId">@ciudad.Nombre</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => EncuestaDetalle.CiudadId)"></ValidationMessage>
+
+                                <label class="col-form-label input-group-text">Monto:</label>
+                                <InputNumber required class="form-control" @bind-Value="EncuestaDetalle.Monto"></InputNumber>
+                                <ValidationMessage For="@(() => EncuestaDetalle.Monto)"></ValidationMessage>
+
+                                <button type="button" class="btn btn-outline-success bi bi-plus" @onclick="Agregar">Agregar</button>
+                            </div>
+                        </div>
+
+                        <table class="table table-sm table-hover table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Ciudad</th>
+                                    <th>Monto</th>
+                                    <th>Remover</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var detalle in Encuesta.Detalle)
+                                {
+                                    var ciudad = ListaCiudades.SingleOrDefault(a => a.CiudadId == detalle.CiudadId);
+                                    <tr>
+                                        <td>@ciudad?.CiudadId</td>
+                                        <td>@ciudad?.Nombre</td>
+                                        <td>@detalle.Monto.ToString("N2")</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-outline-danger bi bi-trash3" @onclick="(() => RemoverDetalle(detalle))"></button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th></th>
+                                    <th></th>
+                                    <th>Total</th>
+                                    <th></th>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td>RD$@Total.ToString("N2")</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button class="btn btn-success bi bi-floppy">   Guardar</button>
+                    <a href="/Encuestas/Index" class="btn btn-secondary bi bi-arrow-left-circle">   Volver</a>
+                </div>
+            </EditForm>
+        </div>
+    </div>
 </div>
 
 @code {
-	[Inject]
-	protected ToastService ToastService { get; set; }
-	public Modelos Modelo { get; set; } = new();
-	public ModelosDetalle ModeloDetalle { get; set; } = new();
-	public List<Articulos> ListaArticulos { get; set; } = new();
-	public double Total { get; set; } = 0;
+    [Inject]
+    protected ToastService ToastService { get; set; }
+    public Encuestas Encuesta { get; set; } = new();
+    public EncuestaDetalle EncuestaDetalle { get; set; } = new();
+    public List<Ciudades> ListaCiudades { get; set; } = new();
+    public Ciudades Ciudad { get; set; } = new();
+    public double Total { get; set; } = 0;
 
-	protected override async Task OnInitializedAsync()
-	{
-		ListaArticulos = await articulosService.Listar(x => true);
-	}
+    protected override async Task OnInitializedAsync()
+    {
+        ListaCiudades = await ciudadesService.Listar(x => true);
+    }
 
-	public async Task Guardar()
-	{
-		if (Modelo.EsteCampoPuedeVariar == null)
-		{
-			ToastService.Notify(new(ToastType.Danger, "Error", $"Complete el campo"));
-			return;
-		}
+    public async Task Guardar()
+    {
+        if (Encuesta.Asignatura == null)
+        {
+            ToastService.Notify(new(ToastType.Danger, "Error", $"Rellene el campo asignatura"));
+            return;
+        }
 
-		if (Modelo.Detalle.Count < 1)
-		{
-			ToastService.Notify(new(ToastType.Danger, "Aviso", $"El detalle debe contener minimo 1 articulo."));
-			return;
-		}
+        if (Encuesta.Detalle.Count < 1)
+        {
+            ToastService.Notify(new(ToastType.Danger, "Aviso", $"El detalle debe contener minimo 1 monto."));
+            return;
+        }
 
-		await modelosService.Guardar(Modelo);
-		ToastService.Notify(new(ToastType.Success, "Exito", $"Modelo registrado correctamente."));
-		navigation.NavigateTo("/Modelos/Index");
-	}
+        await encuestasService.Guardar(Encuesta);
+        ToastService.Notify(new(ToastType.Success, "Exito", $"Encuesta registrada correctamente."));
+        navigation.NavigateTo("/Encuestas/Index");
+    }
 
-	public async Task Agregar((Articulos articulos, int cantidad) seleccion)
-	{
-		if (seleccion.cantidad > seleccion.articulos.Existencia)
-		{
-			ToastService.Notify(new(ToastType.Warning, "Exito", $"La cantidad pedida del articulo no puede ser mayor a la existencia del mismo"));
-			return;
-		}
-		var ExisteArticulo = Modelo.Detalle
-		.FirstOrDefault(a => a.ArticuloId == seleccion.articulos.ArticuloId);
+    public void Agregar()
+    {
+        if (EncuestaDetalle.CiudadId == 0 || EncuestaDetalle.Monto <= 0)
+        {
+            return;
+        }
 
-		if (ExisteArticulo != null)
-		{
-			ExisteArticulo.Cantidad += seleccion.cantidad;
-			ExisteArticulo.Precio = seleccion.articulos.Precio * seleccion.cantidad;
-			Total += seleccion.articulos.Precio * seleccion.cantidad;
-		}
-		else
-		{
-			var detalle = new ModelosDetalle
-				{
-					ArticuloId = seleccion.articulos.ArticuloId,
-					Cantidad = seleccion.cantidad,
-					Precio = seleccion.articulos.Precio * seleccion.cantidad
-				};
-			Modelo.Detalle.Add(detalle);
-			Total += detalle.Precio * seleccion.cantidad;
-			await Task.CompletedTask;
-		}
-	}
+        Encuesta.Detalle.Add(new EncuestaDetalle
+            {
+                CiudadId = EncuestaDetalle.CiudadId,
+                Monto = EncuestaDetalle.Monto
+            });
+        Total += EncuestaDetalle.Monto;
+        Encuesta.Monto = Total;
+    }
 
-	public void RemoverDetalle(ModelosDetalle detalle)
-	{
-		Total -= detalle.Precio * detalle.Cantidad;
-		Modelo.Detalle.Remove(detalle);
-		ModeloDetalle.ArticuloId = detalle.ArticuloId;
-		ModeloDetalle.Cantidad = detalle.Cantidad;
-		ModeloDetalle.Precio = detalle.Precio;
-	}
+    public void RemoverDetalle(EncuestaDetalle detalle)
+    {
+        Total -= detalle.Monto;
+        Encuesta.Monto = Total;
+        Encuesta.Detalle.Remove(detalle);
+        EncuestaDetalle.CiudadId = detalle.CiudadId;
+        EncuestaDetalle.Monto = detalle.Monto;
+    }
 }

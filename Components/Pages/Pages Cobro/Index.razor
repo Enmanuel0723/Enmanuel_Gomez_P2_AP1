@@ -1,5 +1,6 @@
-﻿@page "/Modelos/Index"
-@inject ModelosService modelosService
+﻿@page "/Encuestas/Index"
+@inject EncuestasService encuestasService
+@inject CiudadesService ciudadesService
 
 @rendermode InteractiveServer
 
@@ -9,11 +10,11 @@
         <div class="row" style="background-color:white; padding:10px; margin:10px;">
             <div class="col">
                 <div class="text-left">
-                    <h2 class="text-black">Modelos</h2>
+                    <h2 class="text-black">Encuestas</h2>
                 </div>
             </div>
             <div class="col text-end">
-                <a href="/Modelos/Create" class="btn btn-secondary"><i class="bi bi-plus-lg"></i> Nuevo Modelo</a>
+                <a href="/Encuestas/Create" class="btn btn-secondary"><i class="bi bi-plus-lg"></i> Nueva Encuesta</a>
             </div>
         </div>
     </div>
@@ -28,9 +29,9 @@
                         <div class="form-floating">
                             <InputSelect class="form-select" id="floatingSelect" aria-label="Floating label select example" @bind-Value="@valorFiltro">
                                 <option value="" selected disabled>--- Selecciona ---</option>
-                                <option value="id">ID Modelo</option>
+                                <option value="id">ID Encuesta</option>
                                 <option value="fecha">Fecha</option>
-                                <option value="campo">Campo</option>
+                                <option value="asignatura">Asignatura</option>
                             </InputSelect>
                             <label for="floatingSelect"><strong>Filtrar en base a...</strong></label>
                         </div>
@@ -76,24 +77,28 @@
                 <thead class="table table-striped ">
                     <tr>
                         <th>ID</th>
-                        <th>Campo</th>
+                        <th>Asignatura</th>
+                        <th>Monto</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var modelo in ListaModelos)
+                    @foreach (var encuesta in ListaEncuesta)
                     {
                         <tr>
-                            <td>@modelo.ModeloId</td>
-                            <td>@modelo.EsteCampoPuedeVariar</td>
+                            <td>@encuesta.EncuestaId</td>
+                            <td>@encuesta.Asignatura</td>
+                            <td>RD$@encuesta.Monto.ToString("N2")</td>
                             <td>
-                                <a href="/Modelos/Edit/@modelo.ModeloId" class="btn btn-sm btn-outline-info bi bi-pencil-square"></a>
-                                <a href="/Modelos/Delete/@modelo.ModeloId" class="btn btn-sm btn-outline-danger bi bi-trash3"></a>
+                                <a href="/Encuestas/Edit/@encuesta.EncuestaId" class="btn btn-sm btn-outline-info bi bi-pencil-square"></a>
+                                <a href="/Encuestas/Delete/@encuesta.EncuestaId" class="btn btn-sm btn-outline-danger bi bi-trash3"></a>
                             </td>
                         </tr>
+                        Total += encuesta.Monto;
                     }
                 </tbody>
-                <caption>Cant. de Modelos: @ListaModelos.Count</caption>
+                <caption>Cant. de Encuestas: @ListaEncuesta.Count</caption>
+                <caption>Total de Montos: RD$@Total.ToString("N2")</caption>
             </table>
         </div>
     </div>
@@ -105,11 +110,13 @@
     public string valorFiltro { get; set; } = string.Empty;
     public DateTime? Desde { get; set; } = null;
     public DateTime? Hasta { get; set; } = null;
-    public List<Modelos> ListaModelos { get; set; } = new();
+    public List<Encuestas> ListaEncuesta { get; set; } = new();
+    public List<EncuestaDetalle> ListaDetalle { get; set; } = new();
+    public double Total { get; set; } = 0;
 
     protected override async Task OnInitializedAsync()
     {
-        ListaModelos = await modelosService.Listar(C => true);
+        ListaEncuesta = await encuestasService.Listar(C => true);
     }
 
     // Filtro de busqueda
@@ -118,7 +125,7 @@
         if (string.IsNullOrEmpty(valorFiltro))
         {
             ToastService.Notify(new(ToastType.Warning, "Aviso", "Seleccione una opcion en el filtro."));
-            ListaModelos = await modelosService.Listar(x => true);
+            ListaEncuesta = await encuestasService.Listar(x => true);
             return;
         }
 
@@ -129,7 +136,7 @@
             case "id":
                 if (string.IsNullOrEmpty(searchBarValue))
                 {
-                    ToastService.Notify(new(ToastType.Warning, "Aviso", "Debe proveer un ID de pago para buscar."));
+                    ToastService.Notify(new(ToastType.Warning, "Aviso", "Debe proveer un ID de encuesta para buscar."));
                     return;
                 }
                 if (!searchBarValue.All(char.IsDigit))
@@ -137,21 +144,21 @@
                     ToastService.Notify(new(ToastType.Warning, "Aviso", "El criterio de busqueda solo puede alojar numeros."));
                     return;
                 }
-                ListaModelos = await modelosService.Listar(lt => lt.ModeloId.ToString().Contains(searchBarValue));
+                ListaEncuesta = await encuestasService.Listar(lt => lt.EncuestaId.ToString().Contains(searchBarValue));
                 break;
 
-            case "campo":
+            case "asignatura":
                 if (string.IsNullOrEmpty(searchBarValue))
                 {
-                    ToastService.Notify(new(ToastType.Warning, "Aviso", "Debe proveer un ID de una CxC para buscar."));
+                    ToastService.Notify(new(ToastType.Warning, "Aviso", "Debe proveer una asignatura para buscar."));
                     return;
                 }
-                if (!searchBarValue.All(char.IsDigit))
+                if (searchBarValue.All(char.IsDigit))
                 {
-                    ToastService.Notify(new(ToastType.Warning, "Aviso", "El criterio de busqueda solo puede alojar numeros."));
+                    ToastService.Notify(new(ToastType.Warning, "Aviso", "El criterio de busqueda solo puede alojar letras."));
                     return;
                 }
-                // ListaModelos = await modelosService.Listar(lt => lt.CXCId.ToString().Contains(searchBarValue));
+                ListaEncuesta = await encuestasService.Listar(lt => lt.Asignatura.ToString().Contains(searchBarValue));
                 break;
 
             case "fecha":
@@ -165,18 +172,18 @@
                     ToastService.Notify(new(ToastType.Warning, "Aviso", "La fecha inicial no puede ser mayor a la final."));
                     return;
                 }
-                // ListaModelos = await modelosService.Listar(x => x.FechaPago >= Desde && x.FechaPago <= Hasta);
+                ListaEncuesta = await encuestasService.Listar(x => x.Fecha >= Desde && x.Fecha <= Hasta);
                 break;
 
             default:
-                ListaModelos = await modelosService.Listar(x => true);
+                ListaEncuesta = await encuestasService.Listar(x => true);
                 break;
         }
     }
 
     public async Task Restablecer()
     {
-        ListaModelos = await modelosService.Listar(x => true);
+        ListaEncuesta = await encuestasService.Listar(x => true);
         searchBarValue = string.Empty;
         valorFiltro = string.Empty;
         Desde = null;

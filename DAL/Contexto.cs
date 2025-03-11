@@ -1,22 +1,22 @@
-﻿using Enmanuel_gomez_P2_AP1.Models
+﻿using EnmanuelGomez_AP1_P2.Models;
 using Microsoft.EntityFrameworkCore;
 
 
 public class Context(DbContextOptions<Context> options) : DbContext(options)
 {
-    public DbSet<Modelos> Modelos { get; set; }
-    public DbSet<ModelosDetalle> ModelosDetalle { get; set; }
-    public DbSet<Articulos> Articulos { get; set; }
+    public DbSet<Encuestas> Encuestas { get; set; }
+    public DbSet<EncuestaDetalle> EncuestaDetalle { get; set; }
+    public DbSet<Ciudades> Ciudades { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<Articulos>().HasData(new List<Articulos>()
+        modelBuilder.Entity<Ciudades>().HasData(new List<Ciudades>()
         {
-            new Articulos() {ArticuloId = 1, Nombre = "Campo1", Existencia = 50, Costo = 15, Precio = 30},
-            new Articulos() {ArticuloId = 2, Nombre = "Campo2", Existencia = 40, Costo = 25, Precio = 60},
-            new Articulos() {ArticuloId = 3, Nombre = "Campo3", Existencia = 30, Costo = 35, Precio = 70},
+            new Ciudades() {CiudadId = 1, Nombre = "San Francisco de Macoris", Monto = 150000},
+            new Ciudades() {CiudadId = 2, Nombre = "Salcedo", Monto = 70000},
+            new Ciudades() {CiudadId = 3, Nombre = "Tenares", Monto = 40500},
         });
     }
 }
